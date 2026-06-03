@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 | Demo Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="/css/auth.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "@material/web/": "https://esm.run/@material/web/"
+        }
+    }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+    </script>
+</head>
+<body>
+<main class="auth-layout">
+    <section class="auth-card">
+        <div class="auth-brand">
+            <div class="auth-brand-icon">
+                <span class="material-symbols-outlined">menu_book</span>
+            </div>
+            <div>
+                <h1 class="auth-title">로그인</h1>
+            </div>
+        </div>
+        <p class="auth-subtitle">문서 포털에 접속하려면 계정 정보를 입력하세요.</p>
+
+        <div id="banner" class="message-banner" role="alert"></div>
+
+        <form id="login-form" class="auth-form">
+            <md-outlined-text-field id="login-id" label="아이디" required></md-outlined-text-field>
+            <md-outlined-text-field id="login-password" label="비밀번호" type="password" required></md-outlined-text-field>
+
+            <div class="auth-actions">
+                <md-filled-button type="submit" id="login-submit">로그인</md-filled-button>
+                <md-outlined-button type="button" id="go-signup">회원가입</md-outlined-button>
+            </div>
+        </form>
+
+        <p class="auth-footer">
+            계정이 없으신가요? <a href="/signup.html">회원가입</a>
+        </p>
+    </section>
+</main>
+
+<script src="/js/auth-api.js"></script>
+<script>
+    const queryMessage = getQueryMessage();
+    if (queryMessage) {
+        showBanner('banner', queryMessage, 'success');
+    }
+
+    document.getElementById('go-signup').addEventListener('click', () => {
+        window.location.href = '/signup.html';
+    });
+
+    document.getElementById('login-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        hideBanner('banner');
+
+        const loginId = document.getElementById('login-id').value.trim();
+        const password = document.getElementById('login-password').value;
+
+        if (!loginId || !password) {
+            showBanner('banner', '아이디와 비밀번호를 입력해 주세요.');
+            return;
+        }
+
+        const submitButton = document.getElementById('login-submit');
+        submitButton.disabled = true;
+
+        try {
+            const response = await apiRequest('/api/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_login_id: loginId,
+                    user_password: password,
+                }),
+            });
+
+            saveTokens(response);
+            window.location.href = '/home.html';
+        } catch (error) {
+            showBanner('banner', error.message);
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>

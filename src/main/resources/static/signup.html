@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 | Demo Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="/css/auth.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "@material/web/": "https://esm.run/@material/web/"
+        }
+    }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+    </script>
+</head>
+<body>
+<main class="auth-layout">
+    <section class="auth-card">
+        <div class="auth-brand">
+            <div class="auth-brand-icon">
+                <span class="material-symbols-outlined">person_add</span>
+            </div>
+            <div>
+                <h1 class="auth-title">회원가입</h1>
+            </div>
+        </div>
+        <p class="auth-subtitle">새 계정을 만들고 문서 포털을 이용해 보세요.</p>
+
+        <div id="banner" class="message-banner" role="alert"></div>
+
+        <form id="signup-form" class="auth-form">
+            <md-outlined-text-field id="signup-id" label="아이디" supporting-text="4~50자" required></md-outlined-text-field>
+            <md-outlined-text-field id="signup-nickname" label="닉네임" required></md-outlined-text-field>
+            <md-outlined-text-field id="signup-email" label="이메일" type="email" required></md-outlined-text-field>
+            <md-outlined-text-field id="signup-password" label="비밀번호" type="password" supporting-text="8자 이상" required></md-outlined-text-field>
+            <md-outlined-text-field id="signup-password-confirm" label="비밀번호 확인" type="password" required></md-outlined-text-field>
+
+            <div class="auth-actions">
+                <md-filled-button type="submit" id="signup-submit">가입하기</md-filled-button>
+                <md-outlined-button type="button" id="go-login">로그인으로</md-outlined-button>
+            </div>
+        </form>
+
+        <p class="auth-footer">
+            이미 계정이 있으신가요? <a href="/login.html">로그인</a>
+        </p>
+    </section>
+</main>
+
+<script src="/js/auth-api.js"></script>
+<script>
+    document.getElementById('go-login').addEventListener('click', () => {
+        window.location.href = '/login.html';
+    });
+
+    document.getElementById('signup-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        hideBanner('banner');
+
+        const loginId = document.getElementById('signup-id').value.trim();
+        const nickname = document.getElementById('signup-nickname').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const passwordConfirm = document.getElementById('signup-password-confirm').value;
+
+        if (loginId.length < 4) {
+            showBanner('banner', '아이디는 4자 이상이어야 합니다.');
+            return;
+        }
+        if (password.length < 8) {
+            showBanner('banner', '비밀번호는 8자 이상이어야 합니다.');
+            return;
+        }
+        if (password !== passwordConfirm) {
+            showBanner('banner', '비밀번호 확인이 일치하지 않습니다.');
+            return;
+        }
+
+        const submitButton = document.getElementById('signup-submit');
+        submitButton.disabled = true;
+
+        try {
+            await apiRequest('/api/auth/signup', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_login_id: loginId,
+                    user_nickname: nickname,
+                    user_email: email,
+                    user_password: password,
+                }),
+            });
+
+            window.location.href = '/login.html?message=' + encodeURIComponent('회원가입이 완료되었습니다. 로그인해 주세요.');
+        } catch (error) {
+            showBanner('banner', error.message);
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>

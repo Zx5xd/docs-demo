@@ -5,6 +5,7 @@ import com.example.demo.entity.Docs;
 import com.example.demo.exception.DocNotFoundException;
 import com.example.demo.mapper.DocsMapper;
 import com.example.demo.repository.DocsRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +31,7 @@ public class DocsService {
     }
 
     public List<DocsDTO> findByCategoryId(int categoryId) {
-        return docsMapper.toDtoList(docsRepository.findByCategory_Category_idOrderByDoc_weightAsc(categoryId));
+        return docsMapper.toDtoList(docsRepository.findByCategoryIdOrderByDocWeightAsc(categoryId));
     }
 
     /**
@@ -44,8 +45,10 @@ public class DocsService {
         int currentWeight = current.getDoc_weight();
 
         return docsRepository
-                .findFirstByCategory_Category_idAndDoc_weightGreaterThanOrderByDoc_weightAsc(
-                        categoryId, currentWeight)
+                .findNextByCategoryIdAndDocWeightGreaterThan(
+                        categoryId, currentWeight, PageRequest.of(0, 1))
+                .stream()
+                .findFirst()
                 .map(docsMapper::toDto);
     }
 }

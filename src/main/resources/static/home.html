@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>홈 | Demo Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="/css/auth.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "@material/web/": "https://esm.run/@material/web/"
+        }
+    }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+    </script>
+</head>
+<body>
+<main class="auth-layout">
+    <section class="auth-card">
+        <div class="auth-brand">
+            <div class="auth-brand-icon">
+                <span class="material-symbols-outlined">home</span>
+            </div>
+            <div>
+                <h1 class="auth-title">환영합니다</h1>
+            </div>
+        </div>
+        <p class="auth-subtitle" id="welcome-text">사용자 정보를 불러오는 중...</p>
+
+        <div id="banner" class="message-banner" role="alert"></div>
+
+        <div class="auth-actions">
+            <md-filled-button type="button" id="go-docs">문서 API 테스트</md-filled-button>
+            <md-outlined-button type="button" id="logout-button">로그아웃</md-outlined-button>
+        </div>
+    </section>
+</main>
+
+<script src="/js/auth-api.js"></script>
+<script>
+    async function loadProfile() {
+        const token = getAccessToken();
+        if (!token) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        try {
+            const profile = await apiRequest('/api/auth/me', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            document.getElementById('welcome-text').textContent =
+                `${profile.user_nickname}(${profile.user_login_id})님, 로그인되었습니다.`;
+        } catch (error) {
+            clearTokens();
+            window.location.href = '/login.html?message=' + encodeURIComponent('로그인이 필요합니다.');
+        }
+    }
+
+    document.getElementById('go-docs').addEventListener('click', async () => {
+        const token = getAccessToken();
+        if (!token) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        try {
+            const docs = await apiRequest('/api/docs/category/1', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            showBanner('banner', `문서 ${docs.length}건 조회 성공 (카테고리 1)`, 'success');
+        } catch (error) {
+            showBanner('banner', error.message);
+        }
+    });
+
+    document.getElementById('logout-button').addEventListener('click', async () => {
+        const refreshToken = localStorage.getItem(TOKEN_KEYS.refresh);
+        if (refreshToken) {
+            try {
+                await apiRequest('/api/auth/logout', {
+                    method: 'POST',
+                    body: JSON.stringify({ refresh_token: refreshToken }),
+                });
+            } catch (_) {
+                // ignore logout API failure and clear local tokens
+            }
+        }
+        clearTokens();
+        window.location.href = '/login.html?message=' + encodeURIComponent('로그아웃되었습니다.');
+    });
+
+    loadProfile();
+</script>
+</body>
+</html>
